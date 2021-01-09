@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>FFXIV Airship/Submersible Calculator</title>
+	<style type="text/css">
+		body {
+			font-family: sans-serif;
+        }
+		table {
+			border: 1px solid black;
+			border-collapse: collapse;
+			margin: 0.5em 0;
+        }
+		thead th {
+			font-size: 0.8em;
+			padding: 0.2em;
+        }
+		#airship-output thead th {
+			background-color: #dbb;
+        }
+        #submersible-output thead th {
+			background-color: #bcd;
+        }
+		tr + tr {
+			border-top: 1px solid #ccc;
+        }
+		tbody td {
+			font-size: 0.9em;
+			padding: 0.2em;
+        }
+	</style>
+</head>
+<body>
+<h2>Airships</h2>
+<div id="airship-output"></div>
+<h2>Submersibles</h2>
+<div id="submersible-output"></div>
+<script type="text/javascript">
+(function() {
+	Array.prototype.shuffle = function() {
+		let m = this.length;
+		while (m) {
+			let i = Math.floor(Math.random() * m--);
+			[this[m], this[i]] = [this[i], this[m]];
+		}
+		return this;
+	};
+
+	function getShipScore(ship, surveillanceThreshold) {
+		if (ship.surveillance <= 0 || ship.retrieval <= 0 || ship.speed <= 0 || ship.range <= 0 || ship.favor <= 0) {
+			return 0;
+		}
+		return Math.round(Math.pow(ship.surveillance, 0.5) + Math.pow(ship.retrieval, 0.5) + Math.pow(ship.speed, 0.5) + Math.pow(ship.range, 0.5) + Math.pow(ship.favor, 0.5) / (ship.surveillance < surveillanceThreshold ? 3.0 : 1.0));
+	}
+
+	function writeOutput(data, $element) {
+		const fields = {
+			name: 'Name',
+			rank: 'Rank',
+			components: 'Components',
+			surveillance: 'Surveillance',
+			retrieval: 'Retrieval',
+			speed: 'Speed',
+			range: 'Range',
+			favor: 'Favor',
+			repairMaterials: 'Repair Materials',
+		};
+		const componentTypes = Object.keys(data[0][0].componentList);
+
+		for (let i = 0; i < data.length; i++) {
+			const $table = document.createElement('table');
+
+			const $thead = document.createElement('thead');
+			const $tr = document.createElement('tr');
+			for (let id in fields) {
+				if (fields.hasOwnProperty(id)) {
+					const $th = document.createElement('th');
+					$th.innerText = fields[id];
+					$tr.append($th);
+				}
+			}
+			for (let j = 0; j < componentTypes.length; j++) {
+				const $th = document.createElement('th');
+				$th.innerText = componentTypes[j];
+				$tr.append($th);
+			}
+			$thead.append($tr);
+			$table.append($thead);
+
+			const $tbody = document.createElement('tbody');
+			for (let j = 0; j < data[i].length; j++) {
+				const $tr = document.createElement('tr');
+				for (let id in fields) {
+					if (fields.hasOwnProperty(id)) {
+						const $td = document.createElement('td');
+						$td.innerText = data[i][j][id];
+						$tr.append($td);
+					}
+				}
+				for (let k = 0; k < componentTypes.length; k++) {
+					const $td = document.createElement('td');
+					$td.innerText = data[i][j].componentList[componentTypes[k]];
+					$tr.append($td);
+				}
+
+				$tbody.append($tr);
+			}
+			$table.append($tbody);
+
+			$element.append($table);
+		}
+	}
+
+	const components = {
+		Airship: {
+			Hull: [
+				{
+					name: 'Bronco-type Hull',
+					rank: 1,
+					components: 3,
+					surveillance: 0,
+					retrieval: 0,
+					speed: 0,
+					range: 80,
+					favor: -10,
+					repairMaterials: 1,
+					count: 1
+				},
+				{
+					name: 'Invincible-type Hull',
+					rank: 5,
+					components: 6,
+					surveillance: 0,
+					retrieval: 0,
+					speed: 0,
+					range: 94,
+					favor: -14,
+					repairMaterials: 2,
+					count: 1
+				},
+				{
+					name: 'Enterprise-type Hull',
+					rank: 15,
+					components: 11,
+					surveillance: 0,
+					retrieval: 0,
+					speed: 0,
+					range: 108,
+					favor: -18,
+					repairMaterials: 3,
+					count: 1
+				},
+				{
+					name: 'Invincible II-type Hull',
+					rank: 25,
+					components: 16,
+					surveillance: 0,
+					retrieval: 0,
+					speed: 0,
+					range: 122,
+					favor: -22,
+					repairMaterials: 4,
+					count: 1
+				},
+				{
+					name: 'Odyssey-type Hull',
+					rank: 35,
+					components: 21,
+					surveillance: 0,
+					retrieval: 0,
+					speed: 0,
+					range: 136,
+					favor: -26,
+					repairMaterials: 5,
+					count: 1
+				},
+				{
+					name: 'Tatanora-type Hull',
+					rank: 45,
+					components: 26,
+					surveillance: 0,
+					retrieval: 0,
+					speed: 0,
+					range: 150,
+					favor: -30,
+					repairMaterials: 6,
+					count: 1
+				},
+				{
+					name: 'Viltgance-type Hull',
+					rank: 50,
+					components: 31,
+					surveillance: 0,
+					retrieval: 0,
+					speed: 0,
+					range: 164,
+					favor: -34,
+					repairMaterials: 7,
+					count: 1
+				}
+			],
+			Rigging: [
+				{
+					name: 'Bronco-type Sail',
+					rank: 1,
+					components: 3,
+					surveillance: 0,
+					retrieval: -10,
+					speed: 80,
+					range: -10,
+					favor: 0,
+					repairMaterials: 1,
+					count: 1
+				},
+				{
+					name: 'Invincible-type Propellers',
+					rank: 5,
+					components: 6,
+					surveillance: 0,
+					retrieval: -14,
+					speed: 94,
+					range: -14,
+					favor: 0,
+					repairMaterials: 2,
+					count: 1
+				},
+				{
+					name: 'Enterprise-type Bladder',
+					rank: 15,
+					components: 11,
+					surveillance: 0,
+					retrieval: -18,
+					speed: 108,
+					range: -18,
+					favor: 0,
+					repairMaterials: 3,
+					count: 1
+				},
+				{
+					name: 'Invincible II-type Propellers',
+					rank: 25,
+					components: 16,
+					surveillance: 0,
+					retrieval: -22,
+					speed: 122,
+					range: -22,
+					favor: 0,
+					repairMaterials: 4,
+					count: 1
+				},
+				{
+					name: 'Odyssey-type Bladders',
+					rank: 35,
+					components: 21,
+					surveillance: 0,
+					retrieval: -26,
+					speed: 136,
+					range: -26,
+					favor: 0,
+					repairMaterials: 5,
+					count: 1
+				},
+				{
+					name: 'Tatanora-type Propellers',
+					rank: 45,
+					components: 26,
+					surveillance: 0,
+					retrieval: -30,
+					speed: 150,
+					range: -30,
+					favor: 0,
+					repairMaterials: 6,
+					count: 1
+				},
+				{
+					name: 'Viltgance-type Aetherwings',
+					rank: 50,
+					components: 31,
+					surveillance: 0,
+					retrieval: -34,
+					speed: 164,
+					range: -34,
+					favor: 0,
+					repairMaterials: 7,
+					count: 1
+				}
+			],
+			Forecastle: [
+				{
+					name: 'Bronco-type Forecastle',
+					rank: 1,
+					components: 3,
+					surveillance: 80,
+					retrieval: 0,
+					speed: 0,
+					range: 0,
+					favor: 80,
+					repairMaterials: 1,
+					count: 1
+				},
+				{
+					name: 'Invincible-type Forecastle',
+					rank: 5,
+					components: 6,
+					surveillance: 94,
+					retrieval: 0,
+					speed: 0,
+					range: 0,
+					favor: 94,
+					repairMaterials: 2,
+					count: 1
+				},
+				{
+					name: 'Enterprise-type Forecastle',
+					rank: 15,
+					components: 11,
+					surveillance: 108,
+					retrieval: 0,
+					speed: 0,
+					range: 0,
+					favor: 108,
+					repairMaterials: 3,
+					count: 1
+				},
+				{
+					name: 'Invincible II-type Forecastle',
+					rank: 25,
+					components: 16,
+					surveillance: 122,
+					retrieval: 0,
+					speed: 0,
+					range: 0,
+					favor: 122,
+					repairMaterials: 4,
+					count: 1
+				},
+				{
+					name: 'Odyssey-type Forecastle',
+					rank: 35,
+					components: 21,
+					surveillance: 136,
+					retrieval: 0,
+					speed: 0,
+					range: 0,
+					favor: 136,
+					repairMaterials: 5,
+					count: 1
+				},
+				{
+					name: 'Tatanora-type Forecastle',
+					rank: 45,
+					components: 26,
+					surveillance: 150,
+					retrieval: 0,
+					speed: 0,
+					range: 0,
+					favor: 150,
+					repairMaterials: 6,
+					count: 1
+				},
+				{
+					name: 'Viltgance-type Forecastle',
+					rank: 50,
+					components: 31,
+					surveillance: 164,
+					retrieval: 0,
+					speed: 0,
+					range: 0,
+					favor: 164,
+					repairMaterials: 7,
+					count: 1
+				}
+			],
+			Aftcastle: [
+				{
+					name: 'Bronco-type Aftcastle',
+					rank: 1,
+					components: 3,
+					surveillance: -10,
+					retrieval: 80,
+					speed: -10,
+					range: 0,
+					favor: 0,
+					repairMaterials: 1,
+					count: 1
+				},
+				{
+					name: 'Invincible-type Aftcastle',
+					rank: 5,
+					components: 6,
+					surveillance: -14,
+					retrieval: 94,
+					speed: -14,
+					range: 0,
+					favor: 0,
+					repairMaterials: 2,
+					count: 1
+				},
+				{
+					name: 'Enterprise-type Aftcastle',
+					rank: 15,
+					components: 11,
+					surveillance: -18,
+					retrieval: 108,
+					speed: -18,
+					range: 0,
+					favor: 0,
+					repairMaterials: 3,
+					count: 1
+				},
+				{
+					name: 'Invincible II-type Aftcastle',
+					rank: 25,
+					components: 16,
+					surveillance: -22,
+					retrieval: 122,
+					speed: -22,
+					range: 0,
+					favor: 0,
+					repairMaterials: 4,
+					count: 1
+				},
+				{
+					name: 'Odyssey-type Aftcastle',
+					rank: 35,
+					components: 21,
+					surveillance: -26,
+					retrieval: 136,
+					speed: -26,
+					range: 0,
+					favor: 0,
+					repairMaterials: 5,
+					count: 1
+				},
+				{
+					name: 'Tatanora-type Aftcastle',
+					rank: 45,
+					components: 26,
+					surveillance: -30,
+					retrieval: 150,
+					speed: -30,
+					range: 0,
+					favor: 0,
+					repairMaterials: 6,
+					count: 1
+				},
+				{
+					name: 'Viltgance-type Aftcastle',
+					rank: 50,
+					components: 31,
+					surveillance: -34,
+					retrieval: 164,
+					speed: -34,
+					range: 0,
+					favor: 0,
+					repairMaterials: 7,
+					count: 1
+				}
+			]
+		},
+		Submersible: {
+			Hull: [
+				{
+					name: 'Shark-class Pressure Hull',
+					rank: 1,
+					components: 5,
+					surveillance: -10,
+					retrieval: 30,
+					speed: 20,
+					range: 40,
+					favor: 20,
+					repairMaterials: 1,
+					count: 1
+				},
+				{
+					name: 'Unkiu-class Pressure Hull',
+					rank: 15,
+					components: 9,
+					surveillance: 15,
+					retrieval: 10,
+					speed: 0,
+					range: 60,
+					favor: 15,
+					repairMaterials: 2,
+					count: 1
+				},
+				{
+					name: 'Whale-class Pressure Hull',
+					rank: 25,
+					components: 12,
+					surveillance: -15,
+					retrieval: 55,
+					speed: 35,
+					range: 15,
+					favor: 20,
+					repairMaterials: 3,
+					count: 1
+				},
+				{
+					name: 'Coelacanth-Class Pressure Hull',
+					rank: 35,
+					components: 14,
+					surveillance: 40,
+					retrieval: -10,
+					speed: 25,
+					range: 40,
+					favor: 25,
+					repairMaterials: 4,
+					count: 1
+				},
+				{
+					name: 'Syldra-class Pressure Hull',
+					rank: 45,
+					components: 17,
+					surveillance: 10,
+					retrieval: 75,
+					speed: 30,
+					range: -15,
+					favor: 5,
+					repairMaterials: 5,
+					count: 1
+				},
+				{
+					name: 'Modified Shark-class Pressure Hull',
+					rank: 50,
+					components: 20,
+					surveillance: -5,
+					retrieval: 40,
+					speed: 25,
+					range: 45,
+					favor: 35,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Unkiu-class Pressure Hull',
+					rank: 50,
+					components: 20,
+					surveillance: 20,
+					retrieval: 15,
+					speed: 5,
+					range: 65,
+					favor: 25,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Whale-class Pressure Hull',
+					rank: 50,
+					components: 20,
+					surveillance: -10,
+					retrieval: 55,
+					speed: 40,
+					range: 20,
+					favor: 30,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Coelacanth-Class Pressure Hull',
+					rank: 50,
+					components: 20,
+					surveillance: 40,
+					retrieval: -5,
+					speed: 30,
+					range: 40,
+					favor: 30,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Syldra-class Pressure Hull',
+					rank: 50,
+					components: 20,
+					surveillance: 10,
+					retrieval: 80,
+					speed: 30,
+					range: -15,
+					favor: 10,
+					repairMaterials: 6,
+					count: 0
+				}
+			],
+			Stern: [
+				{
+					name: 'Shark-class Stern',
+					rank: 1,
+					components: 5,
+					surveillance: -30,
+					retrieval: 20,
+					speed: 60,
+					range: 30,
+					favor: 15,
+					repairMaterials: 1,
+					count: 1
+				},
+				{
+					name: 'Unkiu-class Stern',
+					rank: 15,
+					components: 9,
+					surveillance: 15,
+					retrieval: 0,
+					speed: 30,
+					range: 40,
+					favor: 25,
+					repairMaterials: 2,
+					count: 1
+				},
+				{
+					name: 'Whale-class Stern',
+					rank: 25,
+					components: 12,
+					surveillance: 15,
+					retrieval: 20,
+					speed: 0,
+					range: 55,
+					favor: 15,
+					repairMaterials: 3,
+					count: 1
+				},
+				{
+					name: 'Coelacanth-Class Stern',
+					rank: 35,
+					components: 14,
+					surveillance: 10,
+					retrieval: 25,
+					speed: 35,
+					range: 25,
+					favor: 25,
+					repairMaterials: 4,
+					count: 1
+				},
+				{
+					name: 'Syldra-class Sterm',
+					rank: 45,
+					components: 17,
+					surveillance: 20,
+					retrieval: 60,
+					speed: 35,
+					range: -15,
+					favor: 5,
+					repairMaterials: 5,
+					count: 1
+				},
+				{
+					name: 'Modified Shark-class Stern',
+					rank: 50,
+					components: 20,
+					surveillance: -25,
+					retrieval: 25,
+					speed: 70,
+					range: 35,
+					favor: 25,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Unkiu-class Stern',
+					rank: 50,
+					components: 20,
+					surveillance: 20,
+					retrieval: 5,
+					speed: 35,
+					range: 45,
+					favor: 35,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Whale-class Stern',
+					rank: 50,
+					components: 20,
+					surveillance: 20,
+					retrieval: 20,
+					speed: 5,
+					range: 60,
+					favor: 20,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Coelacanth-Class Stern',
+					rank: 50,
+					components: 20,
+					surveillance: 10,
+					retrieval: 25,
+					speed: 40,
+					range: 30,
+					favor: 30,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Syldra-class Sterm',
+					rank: 50,
+					components: 20,
+					surveillance: 20,
+					retrieval: 60,
+					speed: 35,
+					range: -10,
+					favor: 10,
+					repairMaterials: 6,
+					count: 0
+				}
+			],
+			Bow: [
+				{
+					name: 'Shark-class Bow',
+					rank: 1,
+					components: 5,
+					surveillance: 50,
+					retrieval: 40,
+					speed: 10,
+					range: -20,
+					favor: 15,
+					repairMaterials: 1,
+					count: 1
+				},
+				{
+					name: 'Unkiu-class Bow',
+					rank: 15,
+					components: 9,
+					surveillance: 60,
+					retrieval: 20,
+					speed: 20,
+					range: -15,
+					favor: 10,
+					repairMaterials: 2,
+					count: 1
+				},
+				{
+					name: 'Whale-class Bow',
+					rank: 25,
+					components: 12,
+					surveillance: 25,
+					retrieval: 60,
+					speed: -15,
+					range: 20,
+					favor: 15,
+					repairMaterials: 3,
+					count: 1
+				},
+				{
+					name: 'Coelacanth-Class Bow',
+					rank: 35,
+					components: 14,
+					surveillance: 65,
+					retrieval: 10,
+					speed: -10,
+					range: 30,
+					favor: 0,
+					repairMaterials: 4,
+					count: 1
+				},
+				{
+					name: 'Syldra-class Bow',
+					rank: 45,
+					components: 17,
+					surveillance: 45,
+					retrieval: 30,
+					speed: -15,
+					range: 40,
+					favor: 40,
+					repairMaterials: 5,
+					count: 1
+				},
+				{
+					name: 'Modified Shark-class Bow',
+					rank: 50,
+					components: 20,
+					surveillance: 55,
+					retrieval: 50,
+					speed: 15,
+					range: -15,
+					favor: 25,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Unkiu-class Bow',
+					rank: 50,
+					components: 20,
+					surveillance: 65,
+					retrieval: 25,
+					speed: 25,
+					range: -10,
+					favor: 20,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Whale-class Bow',
+					rank: 50,
+					components: 20,
+					surveillance: 25,
+					retrieval: 65,
+					speed: -10,
+					range: 25,
+					favor: 25,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Coelacanth-Class Bow',
+					rank: 50,
+					components: 20,
+					surveillance: 70,
+					retrieval: 15,
+					speed: -10,
+					range: 30,
+					favor: 5,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Syldra-class Bow',
+					rank: 50,
+					components: 20,
+					surveillance: 45,
+					retrieval: 30,
+					speed: -10,
+					range: 40,
+					favor: 40,
+					repairMaterials: 6,
+					count: 0
+				}
+			],
+			Bridge: [
+				{
+					name: 'Shark-class Bridge',
+					rank: 1,
+					components: 5,
+					surveillance: 20,
+					retrieval: 20,
+					speed: 20,
+					range: 20,
+					favor: 20,
+					repairMaterials: 1,
+					count: 1
+				},
+				{
+					name: 'Unkiu-class Bridge',
+					rank: 15,
+					components: 9,
+					surveillance: 25,
+					retrieval: 5,
+					speed: 25,
+					range: 30,
+					favor: 30,
+					repairMaterials: 2,
+					count: 1
+				},
+				{
+					name: 'Whale-class Bridge',
+					rank: 25,
+					components: 12,
+					surveillance: 0,
+					retrieval: 25,
+					speed: 20,
+					range: 45,
+					favor: 40,
+					repairMaterials: 3,
+					count: 1
+				},
+				{
+					name: 'Coelacanth-Class Bridge',
+					rank: 35,
+					components: 14,
+					surveillance: 55,
+					retrieval: 20,
+					speed: 35,
+					range: -15,
+					favor: 50,
+					repairMaterials: 4,
+					count: 1
+				},
+				{
+					name: 'Syldra-class Bridge',
+					rank: 45,
+					components: 17,
+					surveillance: 55,
+					retrieval: 20,
+					speed: -5,
+					range: 30,
+					favor: 60,
+					repairMaterials: 5,
+					count: 1
+				},
+				{
+					name: 'Modified Shark-class Bridge',
+					rank: 50,
+					components: 20,
+					surveillance: 25,
+					retrieval: 25,
+					speed: 30,
+					range: 25,
+					favor: 35,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Unkiu-class Bridge',
+					rank: 50,
+					components: 20,
+					surveillance: 30,
+					retrieval: 10,
+					speed: 30,
+					range: 35,
+					favor: 40,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Whale-class Bridge',
+					rank: 50,
+					components: 20,
+					surveillance: 0,
+					retrieval: 30,
+					speed: 25,
+					range: 50,
+					favor: 45,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Coelacanth-Class Bridge',
+					rank: 50,
+					components: 20,
+					surveillance: 60,
+					retrieval: 20,
+					speed: 35,
+					range: -10,
+					favor: 55,
+					repairMaterials: 6,
+					count: 0
+				},
+				{
+					name: 'Modified Syldra-class Bridge',
+					rank: 50,
+					components: 20,
+					surveillance: 60,
+					retrieval: 20,
+					speed: -5,
+					range: 30,
+					favor: 60,
+					repairMaterials: 6,
+					count: 0
+				}
+			]
+		}
+	};
+
+	const ships = [
+		{
+			name: 'Morandria',
+			type: 'Airship',
+			rank: 50,
+			capacity: 61,
+			surveillance: 0,
+			retrieval: 0,
+			speed: 0,
+			range: 0,
+			favor: 0,
+		},
+		{
+			name: 'Khiara',
+			type: 'Airship',
+			rank: 50,
+			capacity: 61,
+			surveillance: 0,
+			retrieval: 0,
+			speed: 0,
+			range: 0,
+			favor: 0,
+		},
+		{
+			name: 'Allarin',
+			type: 'Airship',
+			rank: 50,
+			capacity: 61,
+			surveillance: 0,
+			retrieval: 0,
+			speed: 0,
+			range: 0,
+			favor: 0,
+		},
+		{
+			name: 'Saleria',
+			type: 'Airship',
+			rank: 50,
+			capacity: 61,
+			surveillance: 0,
+			retrieval: 0,
+			speed: 0,
+			range: 0,
+			favor: 0,
+		},
+		{
+			name: 'Excalibur',
+			type: 'Submersible',
+			rank: 80,
+			capacity: 80,
+			surveillance: 40,
+			retrieval: 50,
+			speed: 25,
+			range: 35,
+			favor: 30,
+		},
+		{
+			name: 'Durandal',
+			type: 'Submersible',
+			rank: 80,
+			capacity: 80,
+			surveillance: 40,
+			retrieval: 50,
+			speed: 25,
+			range: 35,
+			favor: 30,
+		},
+		{
+			name: 'Curtana',
+			type: 'Submersible',
+			rank: 80,
+			capacity: 80,
+			surveillance: 40,
+			retrieval: 50,
+			speed: 25,
+			range: 35,
+			favor: 30,
+		},
+		{
+			name: 'Joyeuse',
+			type: 'Submersible',
+			rank: 80,
+			capacity: 80,
+			surveillance: 40,
+			retrieval: 50,
+			speed: 25,
+			range: 35,
+			favor: 30,
+		},
+	];
+
+	writeOutput(optimizeShips(ships.filter(value => value.type === 'Airship'), components.Airship), document.getElementById('airship-output'));
+	writeOutput(optimizeShips(ships.filter(value => value.type === 'Submersible'), components.Submersible), document.getElementById('submersible-output'));
+
+	function optimizeShips(ships, components) {
+		const componentTypes = Object.keys(components);
+		if (componentTypes.length !== 4) {
+			console.error('Assumed four types of components, code can\'t handle other numbers!');
+				return;
+		}
+
+		let componentTracker = [];
+		for (let type in components) {
+			if (components.hasOwnProperty(type)) {
+				components[type].sort((a, b) => {
+					if (a.components === b.components) {
+						return 0;
+					} else {
+						return a.components > b.components ? 1 : -1;
+					}
+				});
+				let tracker = [];
+				for (let i = 0; i < components[type].length; i++) {
+					if (typeof components[type][i].count === 'undefined') {
+						components[type][i].count = 1;
+					}
+					tracker[i] = components[type][i].count;
+				}
+				componentTracker.push(tracker);
+			}
+		}
+
+		let maxComponents = Math.max(ships[0].capacity, ships[1].capacity, ships[2].capacity, ships[3].capacity);
+		const surveillanceThreshold = ships[0].type === 'Airship' ? 90 : 160 - Math.min(ships[0].surveillance, ships[1].surveillance, ships[2].surveillance, ships[3].surveillance);
+
+		const possibleShips = [];
+		const componentChoices = [null, null, null, null];
+		for (let c1 = 0; c1 < components[componentTypes[0]].length; c1++) {
+			componentChoices[0] = components[componentTypes[0]][c1];
+			if (componentChoices[0].count < 1) {
+				continue; // Ignore components with a count of 0
+			}
+			for (let c2 = 0; c2 < components[componentTypes[1]].length; c2++) {
+				componentChoices[1] = components[componentTypes[1]][c2];
+				if (componentChoices[1].count < 1) {
+					continue; // Ignore components with a count of 0
+				}
+				for (let c3 = 0; c3 < components[componentTypes[2]].length; c3++) {
+					componentChoices[2] = components[componentTypes[2]][c3];
+					if (componentChoices[2].count < 1) {
+						continue; // Ignore components with a count of 0
+					}
+					for (let c4 = 0; c4 < components[componentTypes[3]].length; c4++) {
+						componentChoices[3] = components[componentTypes[3]][c4];
+						if (componentChoices[3].count < 1) {
+							continue; // Ignore components with a count of 0
+						}
+						let currentShip = {
+							rank: 1,
+							components: 0,
+							surveillance: 0,
+							retrieval: 0,
+							speed: 0,
+							range: 0,
+							favor: 0,
+							repairMaterials: 0,
+						}
+						for (let i = 0; i < componentChoices.length; i++) {
+							for (let key in currentShip) {
+								if (currentShip.hasOwnProperty(key)) {
+									if (key === 'rank') {
+										if (currentShip[key] < componentChoices[i][key]) {
+											currentShip[key] = componentChoices[i][key];
+										}
+									} else {
+										currentShip[key] += componentChoices[i][key];
+									}
+								}
+							}
+						}
+						currentShip.componentList = [c1, c2, c3, c4];
+						currentShip.score = getShipScore(currentShip, surveillanceThreshold);
+						if (currentShip.components <= maxComponents) {
+							possibleShips.push(currentShip);
+						}
+					}
+				}
+			}
+		}
+		possibleShips.sort((a, b) => {
+			if (a.score === b.score) {
+				return 0;
+			} else {
+				return a.score < b.score ? 1 : -1;
+			}
+		});
+
+		let bestCombo = {
+			ships: [],
+			score: 0.0,
+		}
+		ship1: for (let s1 = 0; s1 < possibleShips.length; s1++) {
+			const ship1 = possibleShips[s1];
+			if (ship1.score * 4 < bestCombo.score) {
+				break ship1; // At this point all further combos will be worse
+			}
+			if (ship1.components > ships[0].capacity) {
+				continue ship1;
+			}
+
+			ship2: for (let s2 = s1; s2 < possibleShips.length; s2++) {
+				const ship2 = possibleShips[s2];
+				if (ship1.score + ship2.score * 3 < bestCombo.score) {
+					break ship2; // At this point all further combos will be worse
+				}
+				if (ship2.components > ships[1].capacity) {
+					continue ship2;
+				}
+				for (let i = 0; i < 4; i++) {
+					let redundancy = 1;
+					if (ship2.componentList[i] === ship1.componentList[i]) {
+						redundancy++;
+					}
+					if (componentTracker[i][ship2.componentList[i]] < redundancy) {
+						continue ship2;
+					}
+				}
+
+				ship3: for (let s3 = s2; s3 < possibleShips.length; s3++) {
+					const ship3 = possibleShips[s3];
+					if (ship1.score + ship2.score + ship3.score * 2 < bestCombo.score) {
+						break ship3; // At this point all further combos will be worse
+					}
+					if (ship3.components > ships[2].capacity) {
+						continue ship3;
+					}
+					for (let i = 0; i < 4; i++) {
+						let redundancy = 1;
+						if (ship3.componentList[i] === ship1.componentList[i]) {
+							redundancy++;
+						}
+						if (ship3.componentList[i] === ship2.componentList[i]) {
+							redundancy++;
+						}
+						if (componentTracker[i][ship3.componentList[i]] < redundancy) {
+							continue ship3;
+						}
+					}
+
+					ship4: for (let s4 = s3; s4 < possibleShips.length; s4++) {
+						const ship4 = possibleShips[s4];
+						if (ship4.components > ships[3].capacity) {
+							continue ship4;
+						}
+						for (let i = 0; i < 4; i++) {
+							let redundancy = 1;
+							if (ship4.componentList[i] === ship1.componentList[i]) {
+								redundancy++;
+							}
+							if (ship4.componentList[i] === ship2.componentList[i]) {
+								redundancy++;
+							}
+							if (ship4.componentList[i] === ship3.componentList[i]) {
+								redundancy++;
+							}
+							if (componentTracker[i][ship4.componentList[i]] < redundancy) {
+								continue ship4;
+							}
+						}
+
+						let comboScore = ship1.score + ship2.score + ship3.score + ship4.score;
+						if (comboScore > bestCombo.score) {
+							bestCombo.score = comboScore;
+							bestCombo.ships = [[ship1, ship2, ship3, ship4]];
+						} else if (comboScore === bestCombo.score) {
+							bestCombo.ships.push([ship1, ship2, ship3, ship4]);
+						}
+					}
+				}
+			}
+		}
+
+		let output = [];
+		for (let c = 0; c < bestCombo.ships.length; c++) {
+			let current = [];
+			for (let s = 0; s < ships.length; s++) {
+				current.push({...ships[s]});
+				current[s].components = 0;
+				current[s].repairMaterials = 0;
+				current[s].componentList = {};
+				for (let i = 0; i < bestCombo.ships[c].length; i++) {
+					let component = components[componentTypes[i]][bestCombo.ships[c][s].componentList[i]];
+					current[s].componentList[componentTypes[i]] = component.name;
+					for (let key in component) {
+						if (component.hasOwnProperty(key)) {
+							if (key !== 'rank' && key !== 'name') {
+								current[s][key] += component[key];
+							}
+						}
+					}
+				}
+			}
+			output.push(current);
+		}
+		return output;
+	}
+})();
+</script>
+</body>
+</html>
